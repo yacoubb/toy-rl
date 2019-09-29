@@ -1,0 +1,3 @@
+[submodule "toy_nn"]
+	path = toy_nn
+	url = https://github.com/yacoubb/toy-nn.git
