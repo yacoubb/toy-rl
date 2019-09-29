@@ -3,9 +3,10 @@ import numpy as np
 from toy_nn.toy_nn.nn import NeuralNetwork
 
 
-def calc_fitness(network, env_name):
+def calc_fitness(network, env_name, seed):
     # initalise the environment and fitness
     env = gym.make(env_name)
+    env.seed(seed)
     fitness = 0
     observation = env.reset()
     for t in range(1000):
@@ -25,7 +26,7 @@ def cartpole_rl(
     population_size,
     generation_count,
     pareto_param=1,
-    mutation_rate=0.09,
+    mutation_rate=0.1,
     stochastic_repeats=20,
 ):
     # population size: the number of neural networks competing in each generation
@@ -52,9 +53,10 @@ def cartpole_rl(
         # for every member of the population, see how it performs at the cartpole task
         for i in range(population_size):
             for j in range(stochastic_repeats):
-                fitnesses[i] += (
-                    calc_fitness(population[i], "CartPole-v1") / stochastic_repeats
-                )
+                # for each rollout, create a unique but reproduceable seed
+                # by tying environment seed to np.random, the entire set of rollouts all depend on the inital starting seed and hyperparams
+                env_seed = e * population_size + i * stochastic_repeats + stochastic_repeats + int(np.random.randint(0, 5000))
+                fitnesses[i] += calc_fitness(population[i], "CartPole-v1", env_seed) / stochastic_repeats
             fitnesses[i] = int(fitnesses[i])
 
         # order the networks in a list based off of their fitnesses
