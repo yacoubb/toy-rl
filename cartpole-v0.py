@@ -3,13 +3,15 @@ import numpy as np
 from toy_nn.toy_nn.nn import NeuralNetwork
 
 
-def calc_fitness(network, env_name, seed):
+def calc_fitness(network, env_name, seed, render=False):
     # initalise the environment and fitness
     env = gym.make(env_name)
     env.seed(seed)
     fitness = 0
     observation = env.reset()
     for t in range(1000):
+        if render:
+            env.render()
         # toy-nn doesnt handle having squeezed shapes like (3,) but it handles (3,1) fine
         observation = np.expand_dims(observation, -1)
         prediction = network.predict(observation)
@@ -28,6 +30,7 @@ def cartpole_rl(
     pareto_param=1,
     mutation_rate=0.1,
     stochastic_repeats=20,
+    render_best_rollout=False
 ):
     # population size: the number of neural networks competing in each generation
     # generation_count: the number of generations to simulate and mutate for
@@ -46,7 +49,7 @@ def cartpole_rl(
         population.append(NeuralNetwork(network_shape, activations))
 
     for e in range(generation_count):
-        print(f"starting generation {e}")
+        # print(f"starting generation {e}")
         # initialise every population member's fitness to 0
         fitnesses = [0 for i in range(population_size)]
 
@@ -70,6 +73,10 @@ def cartpole_rl(
         print(
             f"max fitness: {ord_fitness[0]} avg fitness: {sum(ord_fitness) / population_size}"
         )
+
+        if render_best_rollout:
+            calc_fitness(ord_pop[0], 'CartPole-v1', np.random.randint(0, 19134234), True)
+
         # now select networks to survive from the ordered list using the pareto distribution
         # https://en.wikipedia.org/wiki/Pareto_distribution
         # we first create a list of indices from the pareto distribution
@@ -91,6 +98,7 @@ def cartpole_rl(
 
 
 if __name__ == "__main__":
-    np.random.seed(4)
-    cartpole_rl(100, 50)
+    args = {'population_size':100, 'generation_count':50, 'pareto_param':0.5, 'mutation_rate':0.05, 'stochastic_repeats':1, 'render_best_rollout':True}
+    print(args)
+    cartpole_rl(**args)
 
