@@ -1,6 +1,7 @@
 import gym
 import numpy as np
 from toy_nn.toy_nn.nn import NeuralNetwork
+from multiprocessing import Pool, cpu_count
 
 
 def neuro_evolution_rl(
@@ -21,6 +22,8 @@ def neuro_evolution_rl(
     # mutation rate: the distribution variance by which network weights and biases are randomly adjusted during mutation
     # stochastic repeats: the number of repeat simulations to run each network on, to ensure networks don't just get lucky
 
+    print(f"starting rl evolution with {cpu_count()} cpu cores")
+
     population = []
     # initialise population_size different neural networks
     # remember the weights are initalised randomly
@@ -31,32 +34,21 @@ def neuro_evolution_rl(
     for e in range(generation_count):
         # initialise every population member's fitness to 0
         fitnesses = [0 for i in range(population_size)]
-
-        # for every member of the population, see how it performs at the selected task
-        for i in range(population_size):
-            # for each rollout, create a unique but reproduceable seed
-            env_seed = i * population_size
-            fitnesses[i] += fitness_func(
-                population[i], environment_name, env_seed, stochastic_repeats
+        with Pool(cpu_count()) as p:
+            fitnesses = p.starmap(
+                fitness_func, [(x, environment_name, e * population_size + population.index(x), stochastic_repeats) for x in population]
             )
-            fitnesses[i] = int(fitnesses[i])
 
         # order the networks in a list based off of their fitnesses
         # reverse since we want highest fitness first
-        ordered_networks = sorted(
-            list(zip(fitnesses, population)), key=lambda x: x[0], reverse=True
-        )
+        ordered_networks = sorted(list(zip(fitnesses, population)), key=lambda x: x[0], reverse=True)
 
         # split the ordered list up into fitnesses and population
         ord_fitness, ord_pop = list(zip(*ordered_networks))
-        print(
-            f"max fitness: {ord_fitness[0]} avg fitness: {sum(ord_fitness) / population_size}"
-        )
+        print(f"max fitness: {ord_fitness[0]} avg fitness: {sum(ord_fitness) / population_size}")
 
         if render_best_rollout:
-            fitness_func(
-                ord_pop[0], environment_name, np.random.randint(0, 19134234), 1, True
-            )
+            fitness_func(ord_pop[0], environment_name, np.random.randint(0, 19134234), 1, True)
 
         # now select networks to survive from the ordered list using the pareto distribution
         # https://en.wikipedia.org/wiki/Pareto_distribution
@@ -76,4 +68,3 @@ def neuro_evolution_rl(
                 mutation.biases[l] += delta_b
             next_generation.append(mutation)
         population = next_generation
-
