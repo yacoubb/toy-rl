@@ -26,6 +26,9 @@ def neuro_evolution_rl(
 
     print(f"starting rl evolution with {cpu_count()} cpu cores")
 
+    population_history = []
+    fitness_history = []
+
     if save_best_networks:
         from os import path, mkdir
         from shutil import rmtree
@@ -81,7 +84,9 @@ def neuro_evolution_rl(
                 mutation.biases[l] += delta_b
             next_generation.append(mutation)
         population = next_generation
-    return ord_pop, ord_fitness
+        population_history.append(ord_pop)
+        fitness_history.append(ord_fitness)
+    return population_history, fitness_history
 
 
 gym.logger.set_level(40)
