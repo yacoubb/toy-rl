@@ -1,4 +1,5 @@
 import gym
+import gym_cartpole_swingup
 import numpy as np
 from reinforcement import neuro_evolution_rl
 
@@ -16,7 +17,8 @@ def calc_fitness(network, env_name, seed, stochastic_repeats, render=False):
             # toy-nn doesnt handle having squeezed shapes like (3,) but it handles (3,1) fine
             observation = np.expand_dims(observation, -1)
             prediction = network.predict(observation)
-            action = np.argmax(prediction)
+            # action = np.argmax(prediction)
+            action = prediction[0]
             observation, reward, done, info = env.step(action)
             fitness += reward / stochastic_repeats
             if done:
@@ -27,13 +29,13 @@ def calc_fitness(network, env_name, seed, stochastic_repeats, render=False):
 
 if __name__ == "__main__":
     args = {
-        "environment_name": "CartPole-v1",
-        "network_shape": [4, 2],
-        "network_activations": ["Sigmoid"],
+        "environment_name": "CartPoleSwingUp-v0",
+        "network_shape": [5, 3, 1],
+        "network_activations": ["Relu", "Sigmoid"],
         "population_size": 100,
         "generation_count": 50,
         "fitness_func": calc_fitness,
-        "pareto_param": 0.5,
+        "pareto_param": 1,
         "mutation_rate": 0.05,
         "stochastic_repeats": 20,
         "render_best_rollout": True,
