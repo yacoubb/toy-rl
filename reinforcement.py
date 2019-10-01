@@ -68,3 +68,6 @@ def neuro_evolution_rl(
                 mutation.biases[l] += delta_b
             next_generation.append(mutation)
         population = next_generation
+
+
+gym.logger.set_level(40)
