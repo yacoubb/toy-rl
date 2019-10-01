@@ -37,6 +37,7 @@ if __name__ == "__main__":
         "mutation_rate": 0.05,
         "stochastic_repeats": 20,
         "render_best_rollout": True,
+        "save_best_networks": False,
     }
     print(args)
     np.random.seed(4)

@@ -15,14 +15,24 @@ def neuro_evolution_rl(
     mutation_rate=0.1,
     stochastic_repeats=20,
     render_best_rollout=False,
+    save_best_networks=False,
 ):
     # all of the above are hyperparameters that will need tuning
     # fitness func: a function that takes in {network, env_name, seed, stochastic_repeats} and produces a fitness for the network
     # pareto_param: the parameter used to control the distribution from which successful networks are selected and bred
     # mutation rate: the distribution variance by which network weights and biases are randomly adjusted during mutation
     # stochastic repeats: the number of repeat simulations to run each network on, to ensure networks don't just get lucky
+    # save best networks: whether or not to save the best network at each generation
 
     print(f"starting rl evolution with {cpu_count()} cpu cores")
+
+    if save_best_networks:
+        from os import path, mkdir
+        from shutil import rmtree
+
+        if path.isdir(f"./{environment_name}-bestnetworks/"):
+            rmtree(f"./{environment_name}-bestnetworks/")
+        mkdir(f"./{environment_name}-bestnetworks/")
 
     population = []
     # initialise population_size different neural networks
@@ -45,10 +55,13 @@ def neuro_evolution_rl(
 
         # split the ordered list up into fitnesses and population
         ord_fitness, ord_pop = list(zip(*ordered_networks))
-        print(f"max fitness: {ord_fitness[0]} avg fitness: {sum(ord_fitness) / population_size}")
+        print(f"{e} [max fitness: {ord_fitness[0]} avg fitness: {sum(ord_fitness) / population_size}]")
 
         if render_best_rollout:
             fitness_func(ord_pop[0], environment_name, np.random.randint(0, 19134234), 1, True)
+
+        if save_best_networks:
+            ord_pop[0].save(f"./{environment_name}-bestnetworks/gen_{e}_fit_{ord_fitness[0]}.json")
 
         # now select networks to survive from the ordered list using the pareto distribution
         # https://en.wikipedia.org/wiki/Pareto_distribution
